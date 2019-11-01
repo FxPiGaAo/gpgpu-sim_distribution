@@ -348,13 +348,14 @@ enum cache_request_status tag_array::tlb_probe( new_addr_type addr, unsigned &id
     unsigned long long valid_timestamp = (unsigned)-1;
 
     bool all_reserved = true;
-
+    new_addr_type temp_b = (new_addr_type)(tag >> 12);
+    //printf("request address:%llu\n",temp_b);
     // check for hit or pending hit
     for (unsigned way=0; way<m_config.m_assoc; way++) {
         unsigned index = set_index*m_config.m_assoc+way;
         cache_block_t *line = m_lines[index];
         new_addr_type temp_a = (new_addr_type)(line->m_tag >> 12);
-        new_addr_type temp_b = (new_addr_type)(tag >> 12);
+        //printf("find address:%llu,\t",temp_a);
         if (temp_a == temp_b) {
             if ( line->get_status(mask) == RESERVED ) {
                 idx = index;
@@ -431,15 +432,17 @@ enum cache_request_status tag_array::modified_tlb_probe( new_addr_type addr) con
     unsigned invalid_line = (unsigned)-1;
     unsigned valid_line = (unsigned)-1;
     //unsigned long long valid_timestamp = (unsigned)-1;
-
+    new_addr_type temp_b = (new_addr_type)(tag >> 12);
+    printf("Request addr:%llu\n",temp_b);
     // check for hit or pending hit
     for (unsigned way=0; way<m_config.m_assoc; way++) {
         unsigned index = set_index*m_config.m_assoc+way;
         cache_block_t *line = m_lines[index];
         new_addr_type temp_a = (new_addr_type)(line->m_tag >> 12);
-        new_addr_type temp_b = (new_addr_type)(tag >> 12);
+        printf("Find addr:%llu,way %u\t",temp_a,way);
         if (temp_a == temp_b) return HIT;
     }
+    printf("Tag probe miss!\n");
     for (unsigned way=0; way<m_config.m_assoc; way++){
         unsigned index = set_index*m_config.m_assoc+way;
         cache_block_t *line = m_lines[index];

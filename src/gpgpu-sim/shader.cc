@@ -1562,7 +1562,7 @@ void shader_core_ctx::writeback()
 }
 
 bool ldst_unit::shared_cycle( warp_inst_t &inst, mem_stage_stall_type &rc_fail, mem_stage_access_type &fail_type)
-{
+{  if(inst.empty()) return true;
    if( inst.space.get_type() != shared_space )
        return true;
 
@@ -1748,10 +1748,10 @@ void ldst_unit::L1_latency_queue_cycle()
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 bool ldst_unit::tlb_cycle( warp_inst_t &inst, mem_stage_stall_type &rc_fail, mem_stage_access_type &fail_type)
 {
-   if( inst.empty() || (inst.space.get_type() != param_space_kernel) )
-       return true;
+   if( inst.empty())
+       return false;
    if( inst.active_count() == 0 ) 
-       return true;
+       return false;
    mem_fetch *mf = m_mf_allocator->alloc(inst,inst.accessq_back());
    enum cache_request_status tlb_status;
    m_tlb->access(mf->get_addr(),tlb_status);
@@ -2528,7 +2528,7 @@ void ldst_unit::cycle()
      }
    }
 
-   if( !new_pipe_reg.empty() && inst_valid) {
+   if( !new_pipe_reg.empty()) {
        unsigned warp_id = new_pipe_reg.warp_id();
        if( new_pipe_reg.is_load() ) {
            if( new_pipe_reg.space.get_type() == shared_space ) {
@@ -2645,6 +2645,9 @@ void ldst_unit::cycle()
      //fprintf(stdout, "After:\t");
      //tlb_temp_inst->print(stdout);
    //}
+   if(pipe_reg.space.get_type() == const_space || pipe_reg.space.get_type() == tex_space){
+       if(!pipe_reg.empty()) tlb_hit = true;
+   }
    if(tlb_hit == true){
     printf("T\n");
     move_warp(tlb_temp_inst, m_dispatch_reg);
@@ -2652,9 +2655,9 @@ void ldst_unit::cycle()
      //tlb_temp_type = *type;
      //tlb_temp_inst = m_dispatch_reg;
    }else{
-     printf("F\n");
+     if(!pipe_reg.empty()) printf("F\n");
      m_dispatch_reg->clear();
-     tlb_temp_inst->clear();
+     //tlb_temp_inst->clear();
      inst_valid = 0;
    }
 //if(!m_pipeline_reg[0]->empty()) assert(m_pipeline_reg[0]->space.get_type()!=0);
